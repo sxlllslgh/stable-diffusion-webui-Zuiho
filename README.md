@@ -22,4 +22,13 @@ There are mainly changed points:
       primaryClass={cs.CV}
 }
 
+@software{Li_Web-based_UI_for_2022,
+      author = {Li, Guanghui},
+      doi = {10.5281/zenodo.7228428},
+      month = {10},
+      title = {{Web-based UI for Stable Diffusion with GPU selector}},
+      url = {https://github.com/sxlllslgh/stable-diffusion-webui-Zuiho},
+      version = {1.0.0},
+      year = {2022}
+}
 ```
