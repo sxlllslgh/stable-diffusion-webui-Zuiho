@@ -26,8 +26,8 @@ general:
     gpu: 0
     outdir: outputs
     default_model: "Stable Diffusion v1.4"
-    default_model_config: "configs/stable-diffusion/v1-inference.yaml"
-    default_model_path: "models/ldm/stable-diffusion-v1/model.ckpt"
+    default_model_config: "configs/stable-diffusion/animehq26k.yaml"
+    default_model_path: "models/ldm/stable-diffusion-v1/animehq26k.ckpt"
     use_sd_concepts_library: True
     sd_concepts_library_folder: "models/custom/sd-concepts-library"
     GFPGAN_dir: "./models/gfpgan"
@@ -43,7 +43,7 @@ general:
     gfpgan_cpu: False
     esrgan_cpu: False
     extra_models_cpu: False
-    extra_models_gpu: False
+    extra_models_gpu: True
     gfpgan_gpu: 0
     esrgan_gpu: 0
     keep_all_models_loaded: False
@@ -58,7 +58,7 @@ general:
     use_float16: False
     precision: "autocast"
     optimized: False
-    optimized_turbo: False
+    optimized_turbo: True
     optimized_config: "optimizedSD/v1-inference.yaml"
     enable_attention_slicing: False
     enable_minimal_memory_usage: False
@@ -331,6 +331,12 @@ model_manager:
                 model_ckpt:
                     file_name:  "model.ckpt"
                     download_link:  "https://www.googleapis.com/storage/v1/b/aai-blog-files/o/sd-v1-4.ckpt?alt=media"
+        animehq26k:
+            model_name:     "Anime HQ 26k"
+            save_location:  "./models/ldm/stable-diffusion-v1"
+            files:
+                model_ckpt:
+                    file_name:  "animehq26k.ckpt"
 
         gfpgan:
             model_name:     "GFPGAN"

@@ -431,7 +431,7 @@ def load_model_from_config(config, ckpt, verbose=False):
     pl_sd = torch.load(ckpt, map_location="cpu")
     if "global_step" in pl_sd:
         logger.info(f"Global Step: {pl_sd['global_step']}")
-    sd = pl_sd["state_dict"]
+    sd = pl_sd["state_dict"] if 'state_dict' in pl_sd else pl_sd
     model = instantiate_from_config(config.model)
     m, u = model.load_state_dict(sd, strict=False)
     if len(m) > 0 and verbose:
@@ -441,7 +441,7 @@ def load_model_from_config(config, ckpt, verbose=False):
         logger.info("unexpected keys:")
         logger.info(u)
 
-    model.cuda()
+    model.to(st.session_state['defaults'].general.gpu)
     model.eval()
     return model
 
@@ -451,7 +451,7 @@ def load_sd_from_config(ckpt, verbose=False):
     pl_sd = torch.load(ckpt, map_location="cpu")
     if "global_step" in pl_sd:
         logger.info(f"Global Step: {pl_sd['global_step']}")
-    sd = pl_sd["state_dict"]
+    sd = pl_sd["state_dict"] if 'state_dict' in pl_sd else pl_sd
     return sd
 
 
@@ -1395,12 +1395,11 @@ def load_sd_model(model_name: str):
         for key in lo:
             sd['model2.' + key[6:]] = sd.pop(key)
 
-        device = torch.device(f"cuda:{st.session_state.defaults.general.gpu}") \
-            if torch.cuda.is_available() else torch.device("cpu")
+        device = torch.device(f"cuda:{st.session_state.defaults.general.gpu}") if torch.cuda.is_available() else torch.device("cpu")
 
         model = instantiate_from_config(config.modelUNet)
         _, _ = model.load_state_dict(sd, strict=False)
-        model.cuda()
+        model.to(device)
         model.eval()
         model.turbo = st.session_state.defaults.general.optimized_turbo
 

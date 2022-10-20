@@ -39,52 +39,6 @@ else
     ENV_MODIFIED_CACHED=0
 fi
 
-# Setup the Conda env for the project. This will also handle updating the env as needed too.
-conda_env_setup () {
-    # Set conda path if it is not already in default environment
-    CUSTOM_CONDA_PATH=
-
-    # Allow setting custom path via file to allow updates of this script without undoing custom path
-    if [ -f custom-conda-path.txt ]; then
-        CUSTOM_CONDA_PATH=$(cat custom-conda-path.txt)
-    fi
-
-    # If custom path is set above, try to setup conda environment
-    if [ -f "${CUSTOM_CONDA_PATH}/etc/profile.d/conda.sh" ]; then
-        . "${CUSTOM_CONDA_PATH}/etc/profile.d/conda.sh"
-    elif [ -n "${CUSTOM_CONDA_PATH}" ] && [ -f "${CUSTOM_CONDA_PATH}/bin" ]; then
-        export PATH="${CUSTOM_CONDA_PATH}/bin:$PATH"
-    fi
-
-    if ! command -v conda >/dev/null; then
-        printf "Anaconda3 not found. Install from here https://www.anaconda.com/products/distribution\n"
-        exit 1
-    fi
-
-    # Create/update conda env if needed
-    if ! conda env list | grep ".*${ENV_NAME}.*" >/dev/null 2>&1; then
-        printf "Could not find conda env: ${ENV_NAME} ... creating ... \n\n"
-        conda env create -f $ENV_FILE
-        ENV_UPDATED=1
-    elif [[ ! -z $CONDA_FORCE_UPDATE && $CONDA_FORCE_UPDATE == "true" ]] || (( $ENV_MODIFIED > $ENV_MODIFIED_CACHED )); then
-        printf "Updating conda env: ${ENV_NAME} ...\n\n"
-        PIP_EXISTS_ACTION=w conda env update --file $ENV_FILE --prune
-        ENV_UPDATED=1
-    fi
-
-    # Clear artifacts from conda after create/update
-    if (( $ENV_UPDATED > 0 )); then
-        conda clean --all
-        echo -n $ENV_MODIFIED > $ENV_MODIFED_FILE
-    fi
-}
-
-# Activate conda environment
-conda_env_activation () {
-    conda activate $ENV_NAME
-    conda info | grep active
-}
-
 # Check to see if the SD model already exists, if not then it creates it and prompts the user to add the SD AI models to the repo directory
 sd_model_loading () {
     if [ -f "$DIRECTORY/models/ldm/stable-diffusion-v1/model.ckpt" ]; then
@@ -152,40 +106,21 @@ post_processor_model_loading () {
     fi
 }
 
-# Show the user a prompt asking them which version of the WebUI they wish to use, Streamlit or Gradio
-launch_webui () {
-    # skip the prompt if --bridge command-line argument is detected
-    for arg in "$@"; do
-        if [ "$arg" == "--bridge" ]; then
-           python -u scripts/relauncher.py "$@"
-           return
-        fi
-    done
-    printf "\n\n########## LAUNCH USING STREAMLIT OR GRADIO? ##########\n\n"
-    printf "Do you wish to run the WebUI using the Gradio or StreamLit Interface?\n\n"
-    printf "Streamlit: \nHas A More Modern UI \nMore Features Planned \nWill Be The Main UI Going Forward \nCurrently In Active Development \nMissing Some Gradio Features\n\n"
-    printf "Gradio: \nCurrently Feature Complete \nUses An Older Interface Style \nWill Not Receive Major Updates\n\n"
-    printf "Which Version of the WebUI Interface do you wish to use?\n"
-    select yn in "Streamlit" "Gradio"; do
-        case $yn in
-            Streamlit ) printf "\nStarting Stable Diffusion WebUI: Streamlit Interface. Please Wait...\n"; python -m streamlit run scripts/webui_streamlit.py; break;;
-            Gradio ) printf "\nStarting Stable Diffusion WebUI: Gradio Interface. Please Wait...\n"; python scripts/relauncher.py "$@"; break;;
-        esac
-    done
-}
-
 # Function to initialize the other functions
 start_initialization () {
-    conda_env_setup
+    virtualenv venv
     sd_model_loading
     post_processor_model_loading
-    conda_env_activation
+    source venv/bin/activate
+    pip3 install --upgrade pip
+    pip3 install numpy scikit-image
+    pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+    pip3 install -r requirements.txt
     if [ ! -e "models/ldm/stable-diffusion-v1/model.ckpt" ]; then
         echo "Your model file does not exist! Place it in 'models/ldm/stable-diffusion-v1' with the name 'model.ckpt'."
         exit 1
     fi
-    launch_webui "$@"
-
+    CUDA_VISIBLE_DEVICES=2 streamlit run --server.address 0.0.0.0 --server.port 31712 scripts/webui_streamlit.py
 }
 
 start_initialization "$@"
