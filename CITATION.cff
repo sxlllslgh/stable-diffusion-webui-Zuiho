@@ -6,5 +6,6 @@ authors:
   orcid: "https://orcid.org/0000-0003-2050-9632"
 title: "Web-based UI for Stable Diffusion with GPU selector"
 version: 1.0.0
+doi: 10.5281/zenodo.7228428
 date-released: 2022-10-20
 url: "https://github.com/sxlllslgh/stable-diffusion-webui-Zuiho"
